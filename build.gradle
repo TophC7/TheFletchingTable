@@ -44,6 +44,28 @@ neoForge {
     }
 }
 
+repositories {
+    maven {
+        name = "Jared"
+        url = "https://maven.blamejared.com"
+        content { includeGroup "mezz.jei" }
+    }
+    maven {
+        name = "TerraformersMC"
+        url = "https://maven.terraformersmc.com/releases"
+        content { includeGroup "dev.emi" }
+    }
+}
+
+dependencies {
+    compileOnly "mezz.jei:jei-1.21.1-neoforge-api:${jei_version}"
+    compileOnly "mezz.jei:jei-1.21.1-common-api:${jei_version}"
+    compileOnly "dev.emi:emi-neoforge:${emi_version}"
+    // uncomment for dev testing:
+    // runtimeOnly "mezz.jei:jei-1.21.1-neoforge:${jei_version}"
+    // runtimeOnly "dev.emi:emi-neoforge:${emi_version}"
+}
+
 sourceSets.main.resources.srcDir 'src/generated/resources'
 
 var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {

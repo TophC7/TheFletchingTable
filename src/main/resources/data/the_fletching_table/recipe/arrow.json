@@ -1,10 +1,10 @@
 {
     "type": "the_fletching_table:fletching",
     "first": {
-        "item": "minecraft:feather"
+        "tag": "c:feathers"
     },
     "second": {
-        "item": "minecraft:stick"
+        "tag": "c:rods/wooden"
     },
     "third": {
         "item": "minecraft:flint"
