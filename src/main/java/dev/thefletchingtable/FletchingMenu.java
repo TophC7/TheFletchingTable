@@ -32,6 +32,9 @@ public class FletchingMenu extends AbstractContainerMenu {
     private final Player player;
     private final ResultContainer resultContainer = new ResultContainer();
 
+    // input costs for the current recipe (updated each time the result slot refreshes)
+    private int[] inputCosts = {1, 1, 1};
+
     private final SimpleContainer inputContainer = new SimpleContainer(3) {
         @Override
         public void setChanged() {
@@ -91,8 +94,8 @@ public class FletchingMenu extends AbstractContainerMenu {
     /** Check if an item belongs in the given slot position based on all loaded recipes + tipped arrow logic. */
     private boolean isValidForSlot(int slotIndex, ItemStack stack) {
         // tipped arrow special case
-        // slot order: [arrow, (empty), potion]
-        if (slotIndex == 0 && stack.is(Items.ARROW)) {
+        // slot order: [(empty), arrow, potion]
+        if (slotIndex == 1 && stack.is(Items.ARROW)) {
             return true;
         }
         if (slotIndex == 2 && (stack.is(Items.POTION) || stack.is(Items.SPLASH_POTION)
@@ -110,9 +113,9 @@ public class FletchingMenu extends AbstractContainerMenu {
         for (RecipeHolder<FletchingRecipe> holder : recipes) {
             FletchingRecipe r = holder.value();
             switch (slotIndex) {
-                case 0 -> { if (r.getFirst().test(stack)) return true; }
+                case 0 -> { if (r.getFirst() != null && r.getFirst().test(stack)) return true; }
                 case 1 -> { if (r.getSecond().test(stack)) return true; }
-                case 2 -> { if (r.getThird() != null && r.getThird().test(stack)) return true; }
+                case 2 -> { if (r.getThird().test(stack)) return true; }
             }
         }
 
@@ -143,22 +146,32 @@ public class FletchingMenu extends AbstractContainerMenu {
                 .getRecipeFor(TheFletchingTableMod.FLETCHING_TYPE.get(), input, level);
 
         if (recipe.isPresent()) {
-            resultContainer.setItem(0,
-                    recipe.get().value().assemble(input, level.registryAccess()));
+            FletchingRecipe r = recipe.get().value();
+            inputCosts = new int[]{
+                    r.getFirst() != null ? r.getFirstCount() : 0,
+                    r.getSecondCount(),
+                    r.getThirdCount()
+            };
+            resultContainer.setItem(0, r.assemble(input, level.registryAccess()));
             return;
         }
 
         // tipped arrow special case
-        // arrow + potion → tipped arrows
-        resultContainer.setItem(0, checkTippedArrowRecipe(input));
+        // (empty) + arrow + potion → tipped arrows
+        ItemStack tipped = checkTippedArrowRecipe(input);
+        if (!tipped.isEmpty()) {
+            inputCosts = new int[]{0, tipped.getCount(), 1};
+        }
+        resultContainer.setItem(0, tipped);
     }
 
     /**
      * Arrow + Potion → Tipped Arrows (hardcoded, not data-driven; potion data must transfer to result).
-     * Yields match the original BFT datapack: normal=16, splash=32, lingering=64 per craft.
+     * Slot layout: [(empty), arrow, potion]. Yields: normal=16, splash=32, lingering=64 per craft.
      */
     private ItemStack checkTippedArrowRecipe(FletchingInput input) {
-        // slot order: [arrow, (empty), potion]
+        if (!input.getItem(0).isEmpty()) return ItemStack.EMPTY;
+
         ItemStack potionStack = input.getItem(2);
 
         boolean isPotion = potionStack.is(Items.POTION)
@@ -169,12 +182,15 @@ public class FletchingMenu extends AbstractContainerMenu {
         PotionContents contents = potionStack.get(DataComponents.POTION_CONTENTS);
         if (contents == null) return ItemStack.EMPTY;
 
-        if (!input.getItem(0).is(Items.ARROW)) return ItemStack.EMPTY;
-        if (!input.getItem(1).isEmpty()) return ItemStack.EMPTY;
+        ItemStack arrowStack = input.getItem(1);
+        if (!arrowStack.is(Items.ARROW)) return ItemStack.EMPTY;
 
         int count = 16;
         if (potionStack.is(Items.SPLASH_POTION)) count = 32;
         else if (potionStack.is(Items.LINGERING_POTION)) count = 64;
+
+        // require enough arrows to match the output count
+        if (arrowStack.getCount() < count) return ItemStack.EMPTY;
 
         ItemStack result = new ItemStack(Items.TIPPED_ARROW, count);
         result.set(DataComponents.POTION_CONTENTS, contents);
@@ -184,9 +200,11 @@ public class FletchingMenu extends AbstractContainerMenu {
     // CRAFTING //
 
     private void onResultTaken(Player player) {
-        inputContainer.removeItem(0, 1);
-        inputContainer.removeItem(1, 1);
-        inputContainer.removeItem(2, 1);
+        for (int i = 0; i < 3; i++) {
+            if (inputCosts[i] > 0) {
+                inputContainer.removeItem(i, inputCosts[i]);
+            }
+        }
 
         access.execute((level, pos) -> {
             level.playSound(null, pos,

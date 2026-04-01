@@ -1,13 +1,14 @@
 {
     "type": "the_fletching_table:fletching",
-    "first": {
+    "second": {
         "item": "minecraft:arrow"
     },
-    "second": {
+    "second_count": 6,
+    "third": {
         "item": "minecraft:glowstone_dust"
     },
     "result": {
         "id": "minecraft:spectral_arrow",
-        "count": 2
+        "count": 6
     }
 }

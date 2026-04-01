@@ -13,10 +13,10 @@ Give the vanilla fletching table a proper use with a custom crafting system for 
 | Slot 1 | Slot 2 | Slot 3 | Result |
 |--------|--------|--------|--------|
 | Feather | Stick | Flint | 6x Arrow |
-| Arrow | Glowstone Dust | - | 2x Spectral Arrow |
-| Arrow | - | Potion | 16x Tipped Arrow |
-| Arrow | - | Splash Potion | 32x Tipped Arrow |
-| Arrow | - | Lingering Potion | 64x Tipped Arrow |
+| - | 6x Arrow | Glowstone Dust | 6x Spectral Arrow |
+| - | 16x Arrow | Potion | 16x Tipped Arrow |
+| - | 32x Arrow | Splash Potion | 32x Tipped Arrow |
+| - | 64x Arrow | Lingering Potion | 64x Tipped Arrow |
 
 Tipped arrows inherit the potion effect from the input potion, including modded potions.
 
@@ -53,7 +53,8 @@ Recipe format:
 ```
 
 - `first`, `second`, `third` are standard ingredient fields - use `"item"` for a specific item or `"tag"` for a tag
-- `third` is optional - omit it for a two-ingredient recipe (the third slot must be empty to match)
+- `first` is optional - omit it for a two-ingredient recipe (the first slot must be empty to match)
+- Each ingredient supports an optional `*_count` field (e.g. `"second_count": 6`) - defaults to 1
 - `result` uses the standard item format with `id` and `count`
 
 ### Tags

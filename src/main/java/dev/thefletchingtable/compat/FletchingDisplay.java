@@ -34,15 +34,23 @@ public record FletchingDisplay(
 
     public static FletchingDisplay from(FletchingRecipe recipe) {
         return new FletchingDisplay(
-                stacksOf(recipe.getFirst()),
-                stacksOf(recipe.getSecond()),
-                recipe.getThird() != null ? stacksOf(recipe.getThird()) : List.of(),
+                recipe.getFirst() != null
+                        ? stacksOf(recipe.getFirst(), recipe.getFirstCount())
+                        : List.of(),
+                stacksOf(recipe.getSecond(), recipe.getSecondCount()),
+                stacksOf(recipe.getThird(), recipe.getThirdCount()),
                 recipe.getResult()
         );
     }
 
-    private static List<ItemStack> stacksOf(Ingredient ingredient) {
-        return Arrays.asList(ingredient.getItems());
+    private static List<ItemStack> stacksOf(Ingredient ingredient, int count) {
+        List<ItemStack> stacks = new ArrayList<>();
+        for (ItemStack stack : ingredient.getItems()) {
+            ItemStack copy = stack.copy();
+            copy.setCount(count);
+            stacks.add(copy);
+        }
+        return stacks;
     }
 
     // TIPPED ARROWS //
@@ -82,8 +90,8 @@ public record FletchingDisplay(
         result.set(DataComponents.POTION_CONTENTS, contents);
 
         list.add(new FletchingDisplay(
-                List.of(new ItemStack(Items.ARROW)),
                 List.of(),
+                List.of(new ItemStack(Items.ARROW, count)),
                 List.of(potion),
                 result
         ));
